@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Catalog Admin (Secure Upload)</title>
+<style>
+  body { background:#000; color:#fff; font-family:Arial; margin:0; padding:40px; text-align:center; }
+  #loginBox, #panel { max-width:420px; margin:0 auto; background:#111; padding:28px; border-radius:12px; }
+  input, button { width:100%; padding:12px; margin-top:12px; border-radius:8px; border:1px solid #444; background:#000; color:#fff; }
+  button:hover { background:#333; }
+  #panel { display:none; }
+  .note { color:#aaa; font-size:14px; margin-top:10px; }
+  #result { margin-top:20px; font-size:14px; white-space:pre-wrap; text-align:left; }
+</style>
+</head>
+<body>
+<h1>Admin Upload Panel</h1>
+
+<div id="loginBox">
+  <p>Enter Admin Password & PIN</p>
+  <input type="password" id="passInput" placeholder="Password" />
+  <input type="password" id="pinInput" placeholder="4-Digit PIN" />
+  <button onclick="adminLogin()">Login</button>
+</div>
+
+<div id="panel">
+  <h2>Upload Images</h2>
+  <input type="file" id="fileInput" multiple accept="image/*" />
+  <button onclick="uploadImages()">Generate list.json</button>
+  <div class="note">Paste this JSON into /images/list.json</div>
+  <div id="result"></div>
+</div>
+
+<script>
+const deviceID = navigator.userAgent + screen.width + screen.height;
+
+function adminLogin(){
+  const savedPass = localStorage.getItem('catalog_pass');
+  const savedPIN  = localStorage.getItem('catalog_pin');
+  const savedDev  = localStorage.getItem('catalog_device');
+
+  const pass = document.getElementById('passInput').value;
+  const pin  = document.getElementById('pinInput').value;
+
+  if(!savedPass){
+    localStorage.setItem('catalog_pass', pass);
+    localStorage.setItem('catalog_pin', pin);
+    localStorage.setItem('catalog_device', deviceID);
+    alert('Admin Credentials Created!');
+    showPanel();
+    return;
+  }
+
+  if(pass === savedPass && pin === savedPIN && deviceID === savedDev){
+    showPanel();
+  } else {
+    alert('Wrong Password / PIN / Device');
+  }
+}
+
+function showPanel(){
+  document.getElementById('loginBox').style.display='none';
+  document.getElementById('panel').style.display='block';
+}
+
+async function uploadImages(){
+  const files = document.getElementById('fileInput').files;
+  if(!files.length){ alert('Select images first'); return; }
+
+  let output = [];
+  for(let f of files){
+    output.push({ file:f.name, category:autoCategory(f.name) });
+  }
+
+  document.getElementById('result').textContent =
+    'Save this into /images/list.json:\n\n' + JSON.stringify(output, null, 2);
+}
+
+function autoCategory(name){
+  name = name.toLowerCase();
+  if(name.includes('por')) return 'portrait';
+  if(name.includes('land')) return 'landscape';
+  if(name.includes('drone')) return 'drone';
+  if(name.includes('travel')) return 'travel';
+  return 'other';
+}
+</script>
+</body>
+</html>
